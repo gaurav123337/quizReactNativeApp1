@@ -1,8 +1,11 @@
-import React from 'react'
+import React from 'react';
+import { useDispatch, useSelector } from "react-redux";
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native'
-import Title from '../components/Title'
+import Title from '../components/Title';
 
 export default function Home({ navigation }) {
+  const storeData = useSelector(state => state);
+  console.log(storeData, 'storeData');
   return (
     <View style={styles.container}>
       <Title />

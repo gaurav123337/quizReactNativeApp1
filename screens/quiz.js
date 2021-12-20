@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useReducer } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 
+import { updateQuesNo } from '../actions/action';
 
 const initialState = 0;
 const reducer = (state, action) => {
@@ -17,6 +19,9 @@ const reducer = (state, action) => {
 };
 
 export default function Quiz({ navigation }) {
+  const storeData = useSelector(state => state);
+  console.log(storeData, 'storeData');
+  const dispatchQuesStatus = useDispatch();
   const [clickCounter, dispatch] = useReducer(reducer, initialState);
   const [allRecords, setAllRecords] = useState();
   const [question, setQuestion] = useState();
@@ -68,6 +73,7 @@ export default function Quiz({ navigation }) {
   }
 
   const nextQues = () => {
+    dispatchQuesStatus(updateQuesNo('CURR_STATE', clickCounter));
     if (clickCounter < 10) {
       getQuestionSet(allRecords[clickCounter]);
     } else {
@@ -86,7 +92,7 @@ export default function Quiz({ navigation }) {
     <ScrollView>
       <View style={styles.container}>
         {!isLoading ? (question && <View style={styles.container}>
-          <Text>This is quiz</Text>
+          <Text>This is quiz - {!storeData.count.currCount ? 0 : storeData.count.currCount}</Text>
           <View style={styles.quiz}>
             <Text style={styles.question}>{question.question}</Text>
           </View>
