@@ -1,7 +1,23 @@
-import React, { useState, useEffect } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
+import React, { useState, useEffect, useReducer } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+
+
+const initialState = 0;
+const reducer = (state, action) => {
+  console.log(action, 'action')
+  switch (action) {
+    case "click":
+      console.log(state, 'sate')
+      return state + 1;
+    case "reset":
+      return 0;
+    default:
+      throw new Error("Unexpected action");
+  }
+};
 
 export default function Quiz({ navigation }) {
+  const [clickCounter, dispatch] = useReducer(reducer, initialState);
   const [allRecords, setAllRecords] = useState();
   const [question, setQuestion] = useState();
   const [ques, setQues] = useState(0);
@@ -14,9 +30,12 @@ export default function Quiz({ navigation }) {
   });
 
   useEffect(() => {
-    console.log(count, 'count on load')
     getQuiz();
   }, []);
+
+  useEffect(() => {
+    allRecords && nextQues();
+  }, [clickCounter]);
 
   const getQuestionSet = (data) => {
     let question = {};
@@ -49,24 +68,20 @@ export default function Quiz({ navigation }) {
   }
 
   const nextQues = () => {
-    setCount(count + 1);
-    console.log(count, 'count');
-    if (count < 10) {
-      getQuestionSet(allRecords[count]);
+    if (clickCounter < 10) {
+      getQuestionSet(allRecords[clickCounter]);
     } else {
       setIsLoading(true);
       getQuiz();
-      setCount(0);
+      dispatch('reset');
     }
   }
-
-
 
   const isCorrect = (answer) => {
     setflag({ ...answer, isClicked: true });
   }
 
-  console.log(flag, 'state', question, count)
+  console.log(flag, 'state', question, count, "clickCounter:" + clickCounter)
   return (
     <ScrollView>
       <View style={styles.container}>
@@ -90,10 +105,10 @@ export default function Quiz({ navigation }) {
             </TouchableOpacity>
           </View>
           <View style={styles.bottom}>
-            <TouchableOpacity style={styles.button} onPress={() => nextQues()}>
+            <TouchableOpacity style={styles.button} onPress={() => getQuiz()}>
               <Text Text style={styles.buttonText}>Skip</Text>
             </TouchableOpacity>
-            {(flag.name === question.options[3].name && flag.isClicked && flag.isTrue) && <TouchableOpacity style={styles.button} onPress={() => nextQues()}>
+            {(flag.name === question.options[3].name && flag.isClicked && flag.isTrue) && <TouchableOpacity style={styles.button} onPress={() => dispatch('click')}>
               <Text style={styles.buttonText}>Next</Text>
             </TouchableOpacity>}
           </View>
