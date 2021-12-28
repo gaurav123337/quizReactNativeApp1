@@ -5,3 +5,11 @@ export const updateQuesNo = (action, payload) => {
     payload: payload
   }
 }
+
+export const correctAnswer = (action, payload) => {
+  console.log(action, 'action', payload);
+  return {
+    type: 'IS_CORRECT',
+    payload: payload
+  }
+}

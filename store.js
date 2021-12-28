@@ -1,13 +1,16 @@
 import { createStore, combineReducers } from 'redux';
-import statueReducer from './reducers/statusReducer';
+import statusReducer from './reducers/statusReducer';
+import correctAnswerReducer from './reducers/correctAnswerReducer';
 
 const mainReducer = combineReducers({
-  count: statueReducer
+  count: statusReducer,
+  correctStatus: correctAnswerReducer
 });
 
 const commonData = {
   status: {
-    currCount: 0
+    currCount: 0,
+    score: 0
   }
 };
 

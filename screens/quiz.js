@@ -2,16 +2,31 @@ import React, { useState, useEffect, useReducer } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 
-import { updateQuesNo } from '../actions/action';
+import { updateQuesNo, correctAnswer } from '../actions/action';
+
+import ResultTracker from '../components/ResultTracker';
 
 const initialState = 0;
 const reducer = (state, action) => {
-  console.log(action, 'action')
   switch (action) {
     case "click":
-      console.log(state, 'sate')
       return state + 1;
     case "reset":
+      return 0;
+    default:
+      throw new Error("Unexpected action");
+  }
+};
+
+const initialAnswerStatus = { isCorrect: 0 };
+const checkAnswerReducer = (state, action) => {
+  console.log(action, 'In quiz checkAnswerReducer');
+  switch (action) {
+    case "CORRECT":
+      const updatedState = { ...state, isCorrect: state.isCorrect + 1 };
+      console.log(updatedState, 'In quiz checkAnswerReducer Current state');
+      return updatedState;
+    case "NOT_CORRECT":
       return 0;
     default:
       throw new Error("Unexpected action");
@@ -22,7 +37,10 @@ export default function Quiz({ navigation }) {
   const storeData = useSelector(state => state);
   console.log(storeData, 'storeData');
   const dispatchQuesStatus = useDispatch();
+  const dispatchCorrectQuesStatus = useDispatch();
   const [clickCounter, dispatch] = useReducer(reducer, initialState);
+  const [answerStatus, dispatchAnswerStatus] = useReducer(checkAnswerReducer, initialAnswerStatus);
+
   const [allRecords, setAllRecords] = useState();
   const [question, setQuestion] = useState();
   const [ques, setQues] = useState(0);
@@ -31,12 +49,21 @@ export default function Quiz({ navigation }) {
   const [flag, setflag] = useState({
     choosenAnswer: '',
     isClicked: false,
-    flagVal: false
+    flagVal: false,
+    score: 0
   });
+
 
   useEffect(() => {
     getQuiz();
   }, []);
+
+  useEffect(() => {
+    console.log('Now called');
+    console.log(answerStatus, 'answerStatus', flag);
+
+    dispatchCorrectQuesStatus(correctAnswer("IS_CORRECT", { ...flag, score: answerStatus.isCorrect }));
+  }, [answerStatus.isCorrect]);
 
   useEffect(() => {
     allRecords && nextQues();
@@ -49,16 +76,19 @@ export default function Quiz({ navigation }) {
         {
           name: item,
           isTrue: false,
-          isClicked: false
+          isClicked: false,
+          score: 0
         }
       )
     });
     const co = {
       "name": data.correct_answer,
       "isTrue": true,
-      "isClicked": false
+      "isClicked": false,
+      "score": 0
     };
     question = { options: [...io, co], question: data.question };
+    console.log(question, 'question')
     setQuestion(question);
   }
 
@@ -66,7 +96,6 @@ export default function Quiz({ navigation }) {
     const url = "https://opentdb.com/api.php?amount=10&type=multiple";
     const res = await fetch(url);
     const data = await res.json();
-    console.log(data);
     setIsLoading(false);
     getQuestionSet(data.results[0]);
     setAllRecords(data.results);
@@ -83,14 +112,33 @@ export default function Quiz({ navigation }) {
     }
   }
 
+  // const isCorrect = (answer) => {
+  //   if (answer.name === allRecords[clickCounter].correct_answer) {
+  //     // setflag({ ...answer, isClicked: true, score: flag.score + 1 });
+  //     // let x = 0;
+  //     // dispatchCorrectQuesStatus(correctAnswer("IS_CORRECT", flag));
+  //     // dispatchCorrectQuesStatus(correctAnswer("IS_CORRECT", x));
+  //     dispatchAnswerStatus("CORRECT");
+  //     console.log(answerStatus, 'answerStatus');
+  //   } else {
+  //     setflag({ ...answer, isClicked: true, score: 0 });
+  //   }
+  //   //setflag({ ...answer, isClicked: true });
+  // }
+
   const isCorrect = (answer) => {
-    setflag({ ...answer, isClicked: true });
+    if (answer.name === allRecords[clickCounter].correct_answer) {
+      dispatchAnswerStatus("CORRECT");
+    }
+    setflag({ ...answer, isClicked: true, score: answerStatus });
   }
 
-  console.log(flag, 'state', question, count, "clickCounter:" + clickCounter)
+
+  //console.log(flag, 'state', question, count, "clickCounter:" + clickCounter)
   return (
     <ScrollView>
       <View style={styles.container}>
+        {storeData?.correctStatus && <ResultTracker currctAnsCount={storeData?.correctStatus?.correctStatus} />}
         {!isLoading ? (question && <View style={styles.container}>
           <Text>This is quiz - {!storeData.count.currCount ? 0 : storeData.count.currCount}</Text>
           <View style={styles.quiz}>
@@ -170,6 +218,13 @@ const styles = StyleSheet.create({
   },
 
   optionButton: {
+    paddingVertical: 12,
+    marginVertical: 6,
+    backgroundColor: "#34A0A4",
+    paddingHorizontal: 12,
+    borderRadius: 12
+  },
+  optionSelectedButton: {
     paddingVertical: 12,
     marginVertical: 6,
     backgroundColor: "#34A0A4",
