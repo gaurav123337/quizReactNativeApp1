@@ -2,7 +2,7 @@ import React, { useState, useEffect, useReducer } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 
-import { updateQuesNo, correctAnswer } from '../actions/action';
+import { updateQuesNo, correctAnswer, collectMyOption, loadQues } from '../actions/action';
 
 import ResultTracker from '../components/ResultTracker';
 
@@ -20,14 +20,16 @@ const reducer = (state, action) => {
 
 const initialAnswerStatus = { isCorrect: 0 };
 const checkAnswerReducer = (state, action) => {
-  console.log(action, 'In quiz checkAnswerReducer');
-  switch (action) {
+  //console.log(action, 'In quiz checkAnswerReducer');
+  switch (action.type) {
     case "CORRECT":
-      const updatedState = { ...state, isCorrect: state.isCorrect + 1 };
-      console.log(updatedState, 'In quiz checkAnswerReducer Current state');
+      const updatedState = { ...state, isCorrect: state.isCorrect + 1, isClicked: true };
+      //console.log(updatedState, 'In quiz checkAnswerReducer Current state');
       return updatedState;
     case "NOT_CORRECT":
-      return 0;
+      const updatedStateValue = { ...state, isCorrect: state.isCorrect, isClicked: false };
+      //console.log(updatedStateValue, 'In quiz checkAnswerReducer Current state');
+      return updatedStateValue;
     default:
       throw new Error("Unexpected action");
   }
@@ -38,11 +40,20 @@ export default function Quiz({ navigation }) {
   console.log(storeData, 'storeData');
   const dispatchQuesStatus = useDispatch();
   const dispatchCorrectQuesStatus = useDispatch();
+  const dispatchMyAnswer = useDispatch();
   const [clickCounter, dispatch] = useReducer(reducer, initialState);
   const [answerStatus, dispatchAnswerStatus] = useReducer(checkAnswerReducer, initialAnswerStatus);
+  const dispatchAllQues = useDispatch();
 
   const [allRecords, setAllRecords] = useState();
   const [question, setQuestion] = useState();
+  const [showResult, setShowResult] = useState(false);
+  const [options, setOptions] = useState({
+    name: "",
+    isTrue: false,
+    isClicked: false,
+    score: 0
+  });
   const [ques, setQues] = useState(0);
   const [count, setCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,7 +63,10 @@ export default function Quiz({ navigation }) {
     flagVal: false,
     score: 0
   });
-
+  const [myAnswer, setMyAnswer] = useState({
+    question: '',
+    choosenOption: ''
+  });
 
   useEffect(() => {
     getQuiz();
@@ -60,10 +74,16 @@ export default function Quiz({ navigation }) {
 
   useEffect(() => {
     console.log('Now called');
-    console.log(answerStatus, 'answerStatus', flag);
+    //console.log(answerStatus, 'answerStatus', flag, myAnswer);
 
-    dispatchCorrectQuesStatus(correctAnswer("IS_CORRECT", { ...flag, score: answerStatus.isCorrect }));
-  }, [answerStatus.isCorrect]);
+    dispatchCorrectQuesStatus(correctAnswer("IS_CORRECT", { ...flag, score: answerStatus.isCorrect, isClicked: answerStatus.isClicked }));
+    dispatchMyAnswer(collectMyOption('MY_ANSWER', myAnswer));
+  }, [answerStatus.isCorrect, answerStatus.isClicked, myAnswer]);
+
+
+  useEffect(() => {
+    dispatchAllQues(loadQues('LOAD', allRecords));
+  }, [allRecords]);
 
   useEffect(() => {
     allRecords && nextQues();
@@ -88,7 +108,7 @@ export default function Quiz({ navigation }) {
       "score": 0
     };
     question = { options: [...io, co], question: data.question };
-    console.log(question, 'question')
+    //console.log(question, 'question')
     setQuestion(question);
   }
 
@@ -101,76 +121,106 @@ export default function Quiz({ navigation }) {
     setAllRecords(data.results);
   }
 
+  // const getQuiz = async () => {
+  //   return async (dispatch) => {
+  //     const url = "https://opentdb.com/api.php?amount=10&type=multiple";
+  //     const res = await fetch(url);
+  //     const data = await res.json();
+  //     setIsLoading(false);
+  //     getQuestionSet(data.results[0]);
+  //     setAllRecords(data.results);
+  //     dispatch({ type: 'LOAD', payload: data.results })
+  //   }
+  // }
+
   const nextQues = () => {
     dispatchQuesStatus(updateQuesNo('CURR_STATE', clickCounter));
     if (clickCounter < 10) {
       getQuestionSet(allRecords[clickCounter]);
+      setflag({ ...flag, isClicked: false });
     } else {
-      setIsLoading(true);
-      getQuiz();
-      dispatch('reset');
+      // setIsLoading(true);
+      // getQuiz();
+      // dispatch('reset');
+      setShowResult(true);
     }
+  }
+
+  const isCorrect = (answer) => {
+    //console.log(answer, 'answer', answerStatus, 'allallRecords', allRecords, 'question', allRecords[clickCounter].question)
+    if (answer.name === allRecords[clickCounter].correct_answer && !answerStatus.isClicked) {
+      // dispatchAnswerStatus("CORRECT");
+      dispatchAnswerStatus({ type: "CORRECT", payload: answer });
+    }
+    setflag({ ...answer, isClicked: true, score: answerStatus });
+    // setMyAnswer([{ ...myAnswer, question: allRecords[clickCounter].question, choosenAnswer: answer.name }]);
+    if (allRecords[clickCounter].question === myAnswer.question) {
+      //setMyAnswer({ ...myAnswer, choosenOption: answer.name });
+      setMyAnswer(Object.assign(myAnswer, { choosenOption: answer.name }))
+    } else {
+      setMyAnswer({ ...myAnswer, question: allRecords[clickCounter].question, choosenOption: answer.name });
+    }
+
+
+    // dispatchMyAnswer(collectMyOption('MY_ANSWER', myAnswer));
+  }
+
+  const getResult = () => {
+    console.log()
   }
 
   // const isCorrect = (answer) => {
-  //   if (answer.name === allRecords[clickCounter].correct_answer) {
-  //     // setflag({ ...answer, isClicked: true, score: flag.score + 1 });
-  //     // let x = 0;
-  //     // dispatchCorrectQuesStatus(correctAnswer("IS_CORRECT", flag));
-  //     // dispatchCorrectQuesStatus(correctAnswer("IS_CORRECT", x));
-  //     dispatchAnswerStatus("CORRECT");
-  //     console.log(answerStatus, 'answerStatus');
+  //   console.log(answer, 'answer', answerStatus)
+  //   if (answer.name === allRecords[clickCounter].correct_answer && !answerStatus.isClicked) {
+  //     // dispatchAnswerStatus("CORRECT");
+  //     dispatchAnswerStatus({ type: "CORRECT", payload: answer });
   //   } else {
-  //     setflag({ ...answer, isClicked: true, score: 0 });
+  //     dispatchAnswerStatus({ type: "NOT_CORRECT", payload: answer });
   //   }
-  //   //setflag({ ...answer, isClicked: true });
+  //   setflag({ ...answer, isClicked: true, score: answerStatus });
   // }
 
-  const isCorrect = (answer) => {
-    if (answer.name === allRecords[clickCounter].correct_answer) {
-      dispatchAnswerStatus("CORRECT");
-    }
-    setflag({ ...answer, isClicked: true, score: answerStatus });
-  }
-
-
+  //console.log(storeData, 'storeData', flag, 'myAnswer', myAnswer);
   //console.log(flag, 'state', question, count, "clickCounter:" + clickCounter)
   return (
-    <ScrollView>
+    <ScrollView ScrollView >
       <View style={styles.container}>
-        {storeData?.correctStatus && <ResultTracker currctAnsCount={storeData?.correctStatus?.correctStatus} />}
+        {/* {storeData?.correctStatus && <ResultTracker currctAnsCount={storeData?.correctStatus?.correctStatus} />} */}
         {!isLoading ? (question && <View style={styles.container}>
           <Text>This is quiz - {!storeData.count.currCount ? 0 : storeData.count.currCount}</Text>
           <View style={styles.quiz}>
             <Text style={styles.question}>{question.question}</Text>
           </View>
           <View style={styles.options}>
-            <TouchableOpacity style={(flag.name === question.options[0].name && flag.isClicked && flag.isTrue) ? styles.optionCorrect : styles.optionButton} onPress={() => isCorrect(question.options[0])}>
+            <TouchableOpacity style={(flag.name === question.options[0].name && flag.isClicked) ? styles.optionCorrect : styles.optionButton} onPress={() => isCorrect(question.options[0])}>
               <Text style={styles.option}>{question.options[0].name}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={(flag.name === question.options[1].name && flag.isClicked && flag.isTrue) ? styles.optionCorrect : styles.optionButton} onPress={() => isCorrect(question.options[1])}>
+            <TouchableOpacity style={(flag.name === question.options[1].name && flag.isClicked) ? styles.optionCorrect : styles.optionButton} onPress={() => isCorrect(question.options[1])}>
               <Text style={styles.option}>{question.options[1].name}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={(flag.name === question.options[2].name && flag.isClicked && flag.isTrue) ? styles.optionCorrect : styles.optionButton} onPress={() => isCorrect(question.options[2])}>
+            <TouchableOpacity style={(flag.name === question.options[2].name && flag.isClicked) ? styles.optionCorrect : styles.optionButton} onPress={() => isCorrect(question.options[2])}>
               <Text style={styles.option}>{question.options[2].name}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={(flag.name === question.options[3].name && flag.isClicked && flag.isTrue) ? styles.optionCorrect : styles.optionButton} onPress={() => isCorrect(question.options[3])}>
+            <TouchableOpacity style={(flag.name === question.options[3].name && flag.isClicked) ? styles.optionCorrect : styles.optionButton} onPress={() => isCorrect(question.options[3])}>
               <Text style={styles.option}>{question.options[3].name}</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.bottom}>
-            <TouchableOpacity style={styles.button} onPress={() => getQuiz()}>
+            {!showResult && <TouchableOpacity style={styles.button} onPress={() => getQuiz()}>
               <Text Text style={styles.buttonText}>Skip</Text>
-            </TouchableOpacity>
-            {(flag.name === question.options[3].name && flag.isClicked && flag.isTrue) && <TouchableOpacity style={styles.button} onPress={() => dispatch('click')}>
+            </TouchableOpacity>}
+            {((flag.isClicked) && !showResult) && <TouchableOpacity style={styles.button} onPress={() => dispatch('click')}>
               <Text style={styles.buttonText}>Next</Text>
+            </TouchableOpacity>}
+            {showResult && <TouchableOpacity style={styles.button} onPress={() => getResult()}>
+              <Text Text style={styles.buttonText} onPress={() => navigation.navigate("Result")}>Result</Text>
             </TouchableOpacity>}
           </View>
         </View>) : <View style={[styles.activityContainer, styles.horizontal]}>
           <ActivityIndicator size="large" color="#00ff00" />
         </View>}
       </View >
-    </ScrollView>
+    </ScrollView >
   )
 }
 

@@ -9,6 +9,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import MyStack from './navigation/index';
 
 import { Provider } from 'react-redux';
+
 import store from './store';
 
 export default function App() {
