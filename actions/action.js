@@ -29,3 +29,11 @@ export const loadQues = (action, payload) => {
     payload: payload
   }
 }
+
+export const restart = (action, payload = undefined) => {
+  console.log(action, 'action', payload);
+  return {
+    type: 'RESTART',
+    payload: payload
+  }
+}

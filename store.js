@@ -12,6 +12,14 @@ const mainReducer = combineReducers({
   loadQues: loadQuesReducer
 });
 
+const rootReducer = (state, action) => {
+  if (action.type === 'RESTART') {
+    return mainReducer(undefined, action)
+  }
+
+  return mainReducer(state, action)
+}
+
 // const commonData = {
 //   status: {
 //     currCount: 0,
@@ -24,6 +32,7 @@ const commonData = {
   score: 0
 };
 
-const store = createStore(mainReducer, commonData, applyMiddleware(thunk));
+// const store = createStore(mainReducer, commonData, applyMiddleware(thunk));
+const store = createStore(rootReducer, commonData, applyMiddleware(thunk));
 
 export default store;

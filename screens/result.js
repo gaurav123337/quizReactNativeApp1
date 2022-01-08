@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native'
+import { useSelector, useDispatch } from 'react-redux';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { restart } from '../actions/action';
 
 export default function Result({ navigation }) {
   const storeData = useSelector(state => state);
+  const dispatchRestart = useDispatch();
   console.log(storeData, 'in result');
   const [correctCount, setCorrectCount] = useState(0);
 
@@ -12,9 +14,7 @@ export default function Result({ navigation }) {
   }, []);
 
   const getResult = () => {
-    // const allQues  = storeData.loadQues[0];
     const { collectMyAnswer, loadQues } = storeData;
-    console.log(collectMyAnswer, loadQues);
 
     let y = [];
     for (let i = 0; i < loadQues[0].length; i++) {
@@ -28,11 +28,18 @@ export default function Result({ navigation }) {
     setCorrectCount(y.length)
   }
 
+  const restartApp = () => {
+    dispatchRestart(restart('RESTART', undefined));
+    navigation.navigate('Home');
+  }
+
   return (
-    <View>
-      <Text>This is result</Text>
-      <View>
-        <Text>{correctCount}</Text>
+    <View style={styles.container}>
+      <View style={styles.viewStyle}>
+        <Text>This is result</Text>
+        <View>
+          <Text style={styles.result}>{correctCount}</Text>
+        </View>
       </View>
 
       <View style={styles.bannerContainer}>
@@ -41,16 +48,20 @@ export default function Result({ navigation }) {
           resizeMode='contain' />
       </View>
       <View>
-        <TouchableOpacity onPress={() => navigation.navigate('Home')}><Text>Home</Text></TouchableOpacity>
+        {/* <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Home')}><Text style={styles.buttonText}>Home</Text></TouchableOpacity> */}
+        <TouchableOpacity style={styles.button} onPress={() => restartApp()}><Text style={styles.buttonText}>Home</Text></TouchableOpacity>
       </View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  banner: {
-    height: 300,
-    width: 300
+  viewStyle: {
+    borderWidth: 3,
+    borderColor: 'green',
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginBottom: 20
   },
   container: {
     paddingVertical: 16,
@@ -59,5 +70,22 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     paddingHorizontal: 20,
     height: '100%'
+  },
+  button: {
+    padding: 16,
+    backgroundColor: '#1A759A',
+    alignItems: 'center',
+    borderRadius: 16,
+    marginBottom: 30
+  },
+  buttonText: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: 'white',
+    fontWeight: '600'
+  },
+  result: {
+    fontSize: 16,
+    fontWeight: '600'
   }
 })
