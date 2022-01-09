@@ -5,7 +5,6 @@ import Title from '../components/Title';
 
 export default function Home({ navigation }) {
   const storeData = useSelector(state => state);
-  // console.log(storeData, 'storeData');
   return (
     <View style={styles.container}>
       <Title />

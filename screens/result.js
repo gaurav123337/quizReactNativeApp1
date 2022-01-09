@@ -48,7 +48,6 @@ export default function Result({ navigation }) {
           resizeMode='contain' />
       </View>
       <View>
-        {/* <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Home')}><Text style={styles.buttonText}>Home</Text></TouchableOpacity> */}
         <TouchableOpacity style={styles.button} onPress={() => restartApp()}><Text style={styles.buttonText}>Home</Text></TouchableOpacity>
       </View>
     </View>

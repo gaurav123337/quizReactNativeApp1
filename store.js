@@ -20,16 +20,9 @@ const rootReducer = (state, action) => {
   return mainReducer(state, action)
 }
 
-// const commonData = {
-//   status: {
-//     currCount: 0,
-//     score: 0
-//   }
-// };
-
 const commonData = {
-  currCount: 0,
-  score: 0
+  // currCount: 0,
+  // score: 0
 };
 
 // const store = createStore(mainReducer, commonData, applyMiddleware(thunk));

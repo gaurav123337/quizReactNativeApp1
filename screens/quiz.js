@@ -20,15 +20,12 @@ const reducer = (state, action) => {
 
 const initialAnswerStatus = { isCorrect: 0 };
 const checkAnswerReducer = (state, action) => {
-  //console.log(action, 'In quiz checkAnswerReducer');
   switch (action.type) {
     case "CORRECT":
       const updatedState = { ...state, isCorrect: state.isCorrect + 1, isClicked: true };
-      //console.log(updatedState, 'In quiz checkAnswerReducer Current state');
       return updatedState;
     case "NOT_CORRECT":
       const updatedStateValue = { ...state, isCorrect: state.isCorrect, isClicked: false };
-      //console.log(updatedStateValue, 'In quiz checkAnswerReducer Current state');
       return updatedStateValue;
     default:
       throw new Error("Unexpected action");
@@ -73,13 +70,9 @@ export default function Quiz({ navigation }) {
   }, []);
 
   useEffect(() => {
-    console.log('Now called');
-    //console.log(answerStatus, 'answerStatus', flag, myAnswer);
-
     dispatchCorrectQuesStatus(correctAnswer("IS_CORRECT", { ...flag, score: answerStatus.isCorrect, isClicked: answerStatus.isClicked }));
     dispatchMyAnswer(collectMyOption('MY_ANSWER', myAnswer));
   }, [answerStatus.isCorrect, answerStatus.isClicked, myAnswer]);
-
 
   useEffect(() => {
     dispatchAllQues(loadQues('LOAD', allRecords));
@@ -108,7 +101,6 @@ export default function Quiz({ navigation }) {
       "score": 0
     };
     question = { options: [...io, co], question: data.question };
-    //console.log(question, 'question')
     setQuestion(question);
   }
 
@@ -121,33 +113,17 @@ export default function Quiz({ navigation }) {
     setAllRecords(data.results);
   }
 
-  // const getQuiz = async () => {
-  //   return async (dispatch) => {
-  //     const url = "https://opentdb.com/api.php?amount=10&type=multiple";
-  //     const res = await fetch(url);
-  //     const data = await res.json();
-  //     setIsLoading(false);
-  //     getQuestionSet(data.results[0]);
-  //     setAllRecords(data.results);
-  //     dispatch({ type: 'LOAD', payload: data.results })
-  //   }
-  // }
-
   const nextQues = () => {
     dispatchQuesStatus(updateQuesNo('CURR_STATE', clickCounter));
-    if (clickCounter < 10) {
+    if (clickCounter < 9) {
       getQuestionSet(allRecords[clickCounter]);
       setflag({ ...flag, isClicked: false });
     } else {
-      // setIsLoading(true);
-      // getQuiz();
-      // dispatch('reset');
       setShowResult(true);
     }
   }
 
   const isCorrect = (answer) => {
-    //console.log(answer, 'answer', answerStatus, 'allallRecords', allRecords, 'question', allRecords[clickCounter].question)
     if (answer.name === allRecords[clickCounter].correct_answer && !answerStatus.isClicked) {
       // dispatchAnswerStatus("CORRECT");
       dispatchAnswerStatus({ type: "CORRECT", payload: answer });
@@ -160,28 +136,13 @@ export default function Quiz({ navigation }) {
     } else {
       setMyAnswer({ ...myAnswer, question: allRecords[clickCounter].question, choosenOption: answer.name });
     }
-
-
-    // dispatchMyAnswer(collectMyOption('MY_ANSWER', myAnswer));
   }
 
   const getResult = () => {
     console.log()
   }
 
-  // const isCorrect = (answer) => {
-  //   console.log(answer, 'answer', answerStatus)
-  //   if (answer.name === allRecords[clickCounter].correct_answer && !answerStatus.isClicked) {
-  //     // dispatchAnswerStatus("CORRECT");
-  //     dispatchAnswerStatus({ type: "CORRECT", payload: answer });
-  //   } else {
-  //     dispatchAnswerStatus({ type: "NOT_CORRECT", payload: answer });
-  //   }
-  //   setflag({ ...answer, isClicked: true, score: answerStatus });
-  // }
-
-  //console.log(storeData, 'storeData', flag, 'myAnswer', myAnswer);
-  //console.log(flag, 'state', question, count, "clickCounter:" + clickCounter)
+  console.log(count, "clickCounter:" + clickCounter)
   return (
     <ScrollView ScrollView >
       <View style={styles.container}>
